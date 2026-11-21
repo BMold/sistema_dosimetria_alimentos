@@ -29,14 +29,6 @@ export const ClassificationPanel: React.FC = () => {
           <StatusBadge status="normal" label={t('class_status')} />
         </div>
 
-        {/* Alimento Detected Info */}
-        <div className="space-y-1">
-          <span className="text-[10px] font-mono text-text-muted uppercase">{t('class_detected')}</span>
-          <div className="text-lg font-heading font-bold text-nuclear-bright text-glow-green uppercase">
-            {tVegetable(clasificacion_alimento.tipo_item_detectado)}
-          </div>
-        </div>
-
         {/* Confidence level */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs font-mono">

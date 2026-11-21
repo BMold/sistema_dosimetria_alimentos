@@ -60,6 +60,25 @@ export const MOCK_SIMULATION_DATA: SimulationData = {
     url_textura_superficie_desenrollada:
       'http://localhost:8000/static/texturas/cache_actual.jpg',
   },
+  calculo_dosis_emision_3d_limite: {
+    dosis_emision_requerida_kGy: 0.125,
+    dosis_real_nucleo_kGy: 0.083,
+    indicadores_seguridad: {
+      DUR_calculado: 1.51,
+      alerta_limite_legal_excedido: false,
+      limite_legal_aplicado_kGy: 2.5,
+    },
+    mapeo_dosis_virtual: [
+      { profundidad_cm: 0.0, dosis_kGy: 0.125, capa: 'Superficie' },
+      { profundidad_cm: 0.7, dosis_kGy: 0.113, capa: 'Intermedia 20%' },
+      { profundidad_cm: 1.4, dosis_kGy: 0.102, capa: 'Intermedia 40%' },
+      { profundidad_cm: 2.1, dosis_kGy: 0.092, capa: 'Intermedia 60%' },
+      { profundidad_cm: 2.8, dosis_kGy: 0.083, capa: 'Núcleo' },
+    ],
+    profundidad_penetrada_cm: 2.8,
+    energia_depositada_total_Joules: 12.45,
+    masa_calculada_kg: 0.3375,
+  },
 };
 
 /**

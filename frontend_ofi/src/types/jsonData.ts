@@ -137,6 +137,32 @@ export interface SimulacionImpactoFinancieroOperativo {
   porcentaje_optimizacion_throughput: number;
 }
 
+// ─────────────────────────────────────────────────────
+// 8. Cálculo de Dosimetría con Límite de Seguridad
+// ─────────────────────────────────────────────────────
+
+export interface MapeoCapaDosis {
+  profundidad_cm: number;
+  dosis_kGy: number;
+  capa: string;
+}
+
+export interface IndicadoresSeguridad {
+  DUR_calculado: number;
+  alerta_limite_legal_excedido: boolean;
+  limite_legal_aplicado_kGy: number;
+}
+
+export interface CalculoDosisEmision3dLimite {
+  dosis_emision_requerida_kGy: number;
+  dosis_real_nucleo_kGy: number;
+  indicadores_seguridad: IndicadoresSeguridad;
+  mapeo_dosis_virtual: MapeoCapaDosis[];
+  profundidad_penetrada_cm: number;
+  energia_depositada_total_Joules: number;
+  masa_calculada_kg: number;
+}
+
 /** JSON unificado completo que envía el backend */
 export interface SimulationData {
   clasificacion_alimento: ClasificacionAlimento;
@@ -146,6 +172,7 @@ export interface SimulationData {
   datos_renderizado_malla_grafica?: DatosRenderizadoMallaGrafica;
   prediccion_vida_util_post_irradiacion?: PrediccionVidaUtilPostIrradiacion;
   simulacion_impacto_financiero_operativo?: SimulacionImpactoFinancieroOperativo;
+  calculo_dosis_emision_3d_limite?: CalculoDosisEmision3dLimite;
 }
 
 // ─────────────────────────────────────────────────────

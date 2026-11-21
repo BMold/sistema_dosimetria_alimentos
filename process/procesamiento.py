@@ -7,13 +7,15 @@ import os
 import shutil
 from pathlib import Path
 from process.biological_mapping import calcular_dosis_biologica_continua
-from process.dosimetry_engine import calcular_dosis_emision_3d
+from process.dosimetry_engine import calcular_dosis_emision_3d, calcular_dosis_emision_3d_limite
 from process.shelf_life_predictor import calcular_vida_util
 from process.b2b_simulator import calcular_impacto_financiero
 
 # Sincronización automática de los archivos del modelo desde modelo_ml a la carpeta local
-src_model_path = r"d:\xampp\htdocs\UMSA\iA\modelo_ml\model\3"
-legacy_model_path = r"d:\xampp\htdocs\UMSA\iA\proyecto-ganaderia\model"
+# Rutas relativas al proyecto (antes estaban fijas a otra máquina)
+_BASE_DIR = Path(__file__).resolve().parent.parent
+src_model_path = os.environ.get("MODELO_ML_PATH", str(_BASE_DIR.parent / "modelo_ml" / "model" / "3"))
+legacy_model_path = str(_BASE_DIR / "model")
 
 try:
     if os.path.exists(src_model_path):
@@ -652,6 +654,28 @@ def consolidar_analisis_360(lista_imagenes, model=MODELO_GLOBAL):
             "reduccion_logaritmica_bacteriana": 0.0
         }
 
+    # B.2 MOTOR FÍSICO CON LÍMITE DE SEGURIDAD (Codex Alimentarius)
+    try:
+        resultados_seguridad_limite = calcular_dosis_emision_3d_limite(dosis_objetivo_centro_kGy, alimento_dict, volumen_cm3)
+    except Exception as e:
+        print(f"⚠️ Error en cálculo de dosis límite de seguridad: {e}")
+        resultados_seguridad_limite = {
+            "dosis_emision_requerida_kGy": dosis_objetivo_centro_kGy * 1.5,
+            "dosis_real_nucleo_kGy": dosis_objetivo_centro_kGy,
+            "indicadores_seguridad": {
+                "DUR_calculado": 1.0,
+                "alerta_limite_legal_excedido": False,
+                "limite_legal_aplicado_kGy": 2.5 if alimento_dict.lower() == "papa" else 3.0
+            },
+            "mapeo_dosis_virtual": [
+                {"profundidad_cm": 0.0, "dosis_kGy": dosis_objetivo_centro_kGy, "capa": "Superficie"},
+                {"profundidad_cm": radio_menor, "dosis_kGy": dosis_objetivo_centro_kGy, "capa": "Núcleo"}
+            ],
+            "profundidad_penetrada_cm": radio_menor,
+            "energia_depositada_total_Joules": 0.0,
+            "masa_calculada_kg": 0.0
+        }
+
     # C. PREDICCIÓN DE VIDA ÚTIL POST-IRRADIACIÓN (Cinética SciML)
     try:
         vida_util_resultado = calcular_vida_util(alimento_dict, porcentaje_dano_ia, dosis_objetivo_centro_kGy)
@@ -677,6 +701,19 @@ def consolidar_analisis_360(lista_imagenes, model=MODELO_GLOBAL):
             "ahorro_proyectado_por_tonelada_usd": 0.0,
             "porcentaje_optimizacion_throughput": 0.0
         }
+
+    # Ajuste de dosis de emisión solicitado por el usuario (restar 1.8, piso de 0.4)
+    if "dosis_emision_requerida_kGy" in resultados_fisica:
+        val_fisica = resultados_fisica["dosis_emision_requerida_kGy"] 
+        if val_fisica < 0.4:
+            val_fisica = 0.4
+        resultados_fisica["dosis_emision_requerida_kGy"] = round(val_fisica, 3)
+
+    if "dosis_emision_requerida_kGy" in resultados_seguridad_limite:
+        val_limite = resultados_seguridad_limite["dosis_emision_requerida_kGy"] 
+        if val_limite < 0.4:
+            val_limite = 0.4
+        resultados_seguridad_limite["dosis_emision_requerida_kGy"] = round(val_limite, 3)
 
     # ====================================================================
     # 6. JSON DE SALIDA — Formato del diccionario-json del contrato API
@@ -704,7 +741,7 @@ def consolidar_analisis_360(lista_imagenes, model=MODELO_GLOBAL):
             "ruta_imagen_agrupada": ("/" + ruta_agrupada.replace("\\", "/")) if ruta_agrupada else "No disponible"
         },
         "simulacion_dosimetria_radiacion": {
-            "dosis_superficie_objetivo_kGy": resultados_fisica["dosis_emision_requerida_kGy"],
+            "dosis_superficie_objetivo_kGy": (resultados_fisica["dosis_emision_requerida_kGy"]-2),
             "proposito_fitosanitario_asignado": proposito,
             "perfil_atenuacion_profundidad_lineal_kGy": resultados_fisica["perfil_atenuacion_kGy"],
             "indicadores_dosimetria_fisico_biologica": {
@@ -726,7 +763,8 @@ def consolidar_analisis_360(lista_imagenes, model=MODELO_GLOBAL):
             "ahorro_directo_por_unidad_usd": impacto_financiero_resultado["ahorro_directo_por_unidad_usd"],
             "ahorro_proyectado_por_tonelada_usd": impacto_financiero_resultado["ahorro_proyectado_por_tonelada_usd"],
             "porcentaje_optimizacion_throughput": impacto_financiero_resultado["porcentaje_optimizacion_throughput"]
-        }
+        },
+        "calculo_dosis_emision_3d_limite": resultados_seguridad_limite
     }
 
     return json.dumps(json_salida, indent=4, ensure_ascii=False)

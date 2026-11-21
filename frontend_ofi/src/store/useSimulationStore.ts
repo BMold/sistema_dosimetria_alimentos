@@ -179,6 +179,25 @@ export const INITIAL_EMPTY_DATA: SimulationData = {
     ahorro_proyectado_por_tonelada_usd: 0,
     porcentaje_optimizacion_throughput: 0,
   },
+  calculo_dosis_emision_3d_limite: {
+    dosis_emision_requerida_kGy: 0,
+    dosis_real_nucleo_kGy: 0,
+    indicadores_seguridad: {
+      DUR_calculado: 1.0,
+      alerta_limite_legal_excedido: false,
+      limite_legal_aplicado_kGy: 2.5,
+    },
+    mapeo_dosis_virtual: [
+      { profundidad_cm: 0, dosis_kGy: 0, capa: 'Superficie' },
+      { profundidad_cm: 1, dosis_kGy: 0, capa: 'Capa 2' },
+      { profundidad_cm: 2, dosis_kGy: 0, capa: 'Capa 3' },
+      { profundidad_cm: 3, dosis_kGy: 0, capa: 'Capa 4' },
+      { profundidad_cm: 4, dosis_kGy: 0, capa: 'Núcleo' },
+    ],
+    profundidad_penetrada_cm: 0,
+    energia_depositada_total_Joules: 0,
+    masa_calculada_kg: 0,
+  },
 };
 
 export const useSimulationStore = create<SimulationStore>((set, get) => ({
